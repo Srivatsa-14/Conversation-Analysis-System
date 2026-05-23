@@ -1,0 +1,2296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation Analytics Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #06d6a0;
+            --warning: #ffd166;
+            --danger: #ef476f;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f5f5;
+            color: var(--dark);
+        }
+
+        /* Navbar */
+        .navbar {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .navbar-brand i {
+            color: var(--secondary);
+        }
+
+        .navbar-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: var(--light);
+            border-radius: 30px;
+        }
+
+        .user-info i {
+            color: var(--primary);
+        }
+
+        .logout-btn {
+            padding: 8px 20px;
+            background: var }
+        .logout-btn {
+                padding: 8px 20px;
+                background: var(--danger);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            }
+
+            .logout-btn:hover {
+                background: #d43f63;
+                transform: translateY(-2px);
+            }
+
+            /* Main Container */
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+
+            /* Welcome Section */
+            .welcome-section {
+                background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 20px;
+                margin-bottom: 30px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .welcome-text h1 {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+
+            .welcome-text p {
+                opacity: 0.9;
+            }
+
+            .stats-badge {
+                background: rgba(255,255,255,0.2);
+                padding: 15px 25px;
+                border-radius: 15px;
+                text-align: center;
+            }
+
+            .stats-badge .number {
+                font-size: 2rem;
+                font-weight: 700;
+            }
+
+            .stats-badge .label {
+                font-size: 0.9rem;
+                opacity: 0.8;
+            }
+
+            /* Mode Selector */
+            .mode-selector {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+
+            .mode-card {
+                background: white;
+                border-radius: 15px;
+                padding: 25px;
+                cursor: pointer;
+                border: 2px solid transparent;
+                transition: all 0.3s ease;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            }
+
+            .mode-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+
+            .mode-card.active {
+                border-color: var(--primary);
+                background: linear-gradient(135deg, rgba(67, 97, 238, 0.05) 0%, rgba(114, 9, 183, 0.05) 100%);
+            }
+
+            .mode-icon {
+                font-size: 2.5rem;
+                color: var(--primary);
+                margin-bottom: 15px;
+            }
+
+            .mode-card h3 {
+                font-size: 1.3rem;
+                margin-bottom: 10px;
+                color: var(--dark);
+            }
+
+            .mode-card p {
+                color: var(--gray);
+                line-height: 1.6;
+            }
+
+            /* Input Section */
+            .input-card {
+                background: white;
+                border-radius: 20px;
+                padding: 30px;
+                margin-bottom: 30px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            }
+
+            .input-title {
+                font-size: 1.3rem;
+                font-weight: 600;
+                margin-bottom: 20px;
+                color: var(--primary);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .file-input {
+                width: 100%;
+                padding: 40px;
+                border: 2px dashed var(--light-gray);
+                border-radius: 15px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin-bottom: 20px;
+            }
+
+            .file-input:hover {
+                border-color: var(--primary);
+                background: rgba(67, 97, 238, 0.05);
+            }
+
+            .file-input i {
+                font-size: 3rem;
+                color: var(--primary);
+                margin-bottom: 15px;
+            }
+
+            .file-input input {
+                display: none;
+            }
+
+            .file-info {
+                margin-top: 15px;
+                padding: 15px;
+                background: var(--light);
+                border-radius: 10px;
+                display: none;
+            }
+
+            .file-info.active {
+                display: block;
+            }
+
+            .url-input {
+                width: 100%;
+                padding: 15px;
+                border: 2px solid var(--light-gray);
+                border-radius: 10px;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+            }
+
+            .url-input:focus {
+                outline: none;
+                border-color: var(--primary);
+            }
+
+            .record-btn {
+                padding: 20px 40px;
+                font-size: 1.2rem;
+                background: var(--danger);
+                color: white;
+                border: none;
+                border-radius: 50px;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 15px;
+                transition: all 0.3s ease;
+            }
+
+            .record-btn:hover {
+                background: #d43f63;
+                transform: scale(1.05);
+            }
+
+            .record-btn.recording {
+                background: var(--success);
+                animation: pulse 1.5s infinite;
+            }
+
+            @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 rgba(6, 214, 160, 0.7); }
+                70% { box-shadow: 0 0 0 20px rgba(6, 214, 160, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(6, 214, 160, 0); }
+            }
+
+            /* Progress Bar */
+            .progress-bar {
+                height: 10px;
+                background: var(--light-gray);
+                border-radius: 5px;
+                overflow: hidden;
+                margin: 20px 0;
+            }
+
+            .progress-fill {
+                height: 100%;
+                background: linear-gradient(90deg, var(--primary), var(--secondary));
+                width: 0%;
+                transition: width 0.5s ease;
+            }
+
+            /* Action Buttons */
+            .action-buttons {
+                display: flex;
+                gap: 15px;
+                margin-top: 20px;
+            }
+
+            .btn {
+                padding: 12px 25px;
+                border: none;
+                border-radius: 10px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .btn-primary {
+                background: var(--primary);
+                color: white;
+            }
+
+            .btn-primary:hover {
+                background: var(--primary-dark);
+                transform: translateY(-2px);
+            }
+
+            .btn-success {
+                background: var(--success);
+                color: white;
+            }
+
+            .btn-success:hover {
+                background: #05b887;
+                transform: translateY(-2px);
+            }
+
+            .btn-secondary {
+                background: var(--light-gray);
+                color: var(--dark);
+            }
+
+            .btn-secondary:hover {
+                background: #dde1e7;
+                transform: translateY(-2px);
+            }
+
+            .btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none !important;
+            }
+
+            /* Loader */
+            .loader {
+                display: none;
+                text-align: center;
+                padding: 40px;
+                background: white;
+                border-radius: 20px;
+                margin: 20px 0;
+            }
+
+            .loader.active {
+                display: block;
+            }
+
+            .spinner {
+                width: 50px;
+                height: 50px;
+                border: 5px solid var(--light-gray);
+                border-top: 5px solid var(--primary);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            /* Messages */
+            .error-message {
+                background: rgba(239, 71, 111, 0.1);
+                color: var(--danger);
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                border-left: 5px solid var(--danger);
+                display: none;
+            }
+
+            .success-message {
+                background: rgba(6, 214, 160, 0.1);
+                color: var(--success);
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                border-left: 5px solid var(--success);
+                display: none;
+            }
+
+            /* Results Section */
+            #resultsSection {
+                display: none;
+            }
+
+            /* Stats Grid */
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+
+            .stat-card {
+                background: white;
+                padding: 25px;
+                border-radius: 15px;
+                text-align: center;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+                transition: transform 0.3s ease;
+            }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+            }
+
+            .stat-value {
+                font-size: 2.5rem;
+                font-weight: 700;
+                color: var(--primary);
+                margin-bottom: 5px;
+            }
+
+            .stat-label {
+                color: var(--gray);
+                font-size: 0.9rem;
+            }
+
+            /* Summary Box */
+            .summary-box {
+                background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 15px;
+                margin-bottom: 30px;
+            }
+
+            .summary-box h3 {
+                margin-bottom: 15px;
+                font-size: 1.3rem;
+            }
+
+            .summary-box p {
+                line-height: 1.8;
+                opacity: 0.95;
+            }
+
+            /* Speaker Summaries */
+            .speaker-summaries {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+
+            .speaker-summary-card {
+                background: white;
+                padding: 20px;
+                border-radius: 15px;
+                border-left: 5px solid var(--primary);
+                box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            }
+
+            .speaker-summary-card h4 {
+                color: var(--primary);
+                margin-bottom: 10px;
+                font-size: 1.1rem;
+            }
+
+            .speaker-summary-card p {
+                color: var(--gray);
+                line-height: 1.6;
+                font-size: 0.95rem;
+            }
+
+            /* Visualization Section */
+            .visualization-section {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+                gap: 25px;
+                margin-bottom: 30px;
+            }
+
+            .chart-card {
+                background: white;
+                border-radius: 15px;
+                padding: 20px;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            }
+
+            .chart-title {
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: var(--dark);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .chart-container {
+                height: 300px;
+                position: relative;
+            }
+
+            /* Analysis Grid */
+            .analysis-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 25px;
+                margin-bottom: 30px;
+            }
+
+            .analysis-card {
+                background: white;
+                border-radius: 15px;
+                padding: 20px;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            }
+
+            .analysis-card h3 {
+                color: var(--primary);
+                margin-bottom: 15px;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .tag-cloud {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .tag {
+                background: var(--light);
+                color: var(--dark);
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-size: 0.9rem;
+            }
+
+            .tag.primary {
+                background: rgba(67, 97, 238, 0.1);
+                color: var(--primary);
+            }
+
+            /* Transcript */
+            .transcript-container {
+                max-height: 400px;
+                overflow-y: auto;
+                padding: 20px;
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            }
+
+            .transcript-line {
+                padding: 15px;
+                margin-bottom: 15px;
+                background: var(--light);
+                border-radius: 10px;
+                border-left: 5px solid var(--primary);
+            }
+
+            .transcript-speaker {
+                font-weight: 600;
+                color: var(--primary);
+                margin-bottom: 5px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .transcript-time {
+                color: var(--gray);
+                font-size: 0.85rem;
+                font-weight: normal;
+            }
+
+            .transcript-text {
+                line-height: 1.6;
+                margin-bottom: 10px;
+            }
+
+            .transcript-meta {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .sentiment-badge {
+                display: inline-block;
+                padding: 3px 12px;
+                border-radius: 15px;
+                font-size: 0.8rem;
+                font-weight: 500;
+            }
+
+            .sentiment-positive {
+                background: rgba(6, 214, 160, 0.1);
+                color: #06d6a0;
+            }
+
+            .sentiment-negative {
+                background: rgba(239, 71, 111, 0.1);
+                color: #ef476f;
+            }
+
+            .sentiment-neutral {
+                background: rgba(108, 117, 125, 0.1);
+                color: #6c757d;
+            }
+
+            /* Speaker Tags */
+            .speaker-tag {
+                display: inline-block;
+                padding: 5px 15px;
+                background: var(--primary);
+                color: white;
+                border-radius: 15px;
+                font-size: 0.9rem;
+                margin-right: 10px;
+            }
+
+            .speaker-tag.speaker-1 { background: #4361ee; }
+            .speaker-tag.speaker-2 { background: #7209b7; }
+            .speaker-tag.speaker-3 { background: #06d6a0; }
+            .speaker-tag.speaker-4 { background: #ffd166; color: var(--dark); }
+            .speaker-tag.speaker-5 { background: #ef476f; }
+
+            /* History Section */
+            .history-section {
+                background: white;
+                border-radius: 15px;
+                padding: 20px;
+                margin-top: 30px;
+            }
+
+            .history-title {
+                font-size: 1.2rem;
+                font-weight: 600;
+                margin-bottom: 20px;
+                color: var(--primary);
+            }
+
+            .history-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 15px;
+            }
+
+            .history-item {
+                padding: 15px;
+                background: var(--light);
+                border-radius: 10px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .history-item:hover {
+                background: rgba(67, 97, 238, 0.1);
+                transform: translateX(5px);
+            }
+
+            .history-item h4 {
+                margin-bottom: 5px;
+                color: var(--dark);
+            }
+
+            .history-item p {
+                color: var(--gray);
+                font-size: 0.9rem;
+            }
+
+            .history-meta {
+                display: flex;
+                gap: 15px;
+                margin-top: 10px;
+                font-size: 0.8rem;
+                color: var(--gray);
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .container {
+                    padding: 10px;
+                }
+
+                .welcome-section {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 20px;
+                }
+
+                .visualization-section {
+                    grid-template-columns: 1fr;
+                }
+
+                .action-buttons {
+                    flex-direction: column;
+                }
+
+                .btn {
+                    width: 100%;
+                    justify-content: center;
+                }
+
+                .stats-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Navbar -->
+        <div class="navbar">
+            <div class="navbar-brand">
+                <i class="fas fa-comments"></i>
+                <span>Conversation Analytics</span>
+            </div>
+            <div class="navbar-menu">
+                <div class="user-info" id="userInfo">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userName">Loading...</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Welcome Section -->
+            <div class="welcome-section" id="welcomeSection">
+                <div class="welcome-text">
+                    <h1 id="welcomeMessage">Welcome back!</h1>
+                    <p>Upload or record a conversation to get AI-powered insights</p>
+                </div>
+                <div class="stats-badge">
+                    <div class="number" id="totalConversations">0</div>
+                    <div class="label">Total Analyses</div>
+                </div>
+            </div>
+
+            <!-- Mode Selector -->
+            <div class="mode-selector">
+                <div class="mode-card active" data-mode="upload" onclick="selectMode('upload')">
+                    <div class="mode-icon">
+                        <i class="fas fa-upload"></i>
+                    </div>
+                    <h3>Upload File</h3>
+                    <p>Upload audio/video files (MP3, WAV, MP4, etc.) for detailed analysis</p>
+                </div>
+
+                <div class="mode-card" data-mode="live" onclick="selectMode('live')">
+                    <div class="mode-icon">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <h3>Live Recording</h3>
+                    <p>Record conversations directly from your microphone in real-time</p>
+                </div>
+
+                <!-- <div class="mode-card" data-mode="url" onclick="selectMode('url')">
+                    <div class="mode-icon">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <h3>Audio URL</h3>
+                    <p>Provide a URL to an online audio file for analysis</p>
+                </div> -->
+            </div>
+
+            <!-- Error/Success Messages -->
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <!-- Input Card -->
+            <div class="input-card">
+                <div class="input-title">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span id="modeTitle">Upload Audio File</span>
+                </div>
+
+                <!-- Upload Mode -->
+                <div class="input-section" id="uploadSection">
+                    <div class="file-input" onclick="document.getElementById('audioFile').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Click to upload audio file</h3>
+                        <p>Supported formats: MP3, WAV, M4A, MP4, MOV, etc. (Max 200MB)</p>
+                        <input type="file" id="audioFile" accept="audio/*,video/*" onchange="handleFileSelect(event)">
+                    </div>
+                    <div class="file-info" id="fileInfo">
+                        <p><strong>Selected File:</strong> <span id="fileName"></span></p>
+                        <p><strong>File Size:</strong> <span id="fileSize"></span></p>
+                        <p><strong>Duration:</strong> <span id="fileDuration">Calculating...</span></p>
+                    </div>
+                </div>
+
+                <!-- Live Mode -->
+                <div class="input-section" id="liveSection" style="display: none;">
+                    <div class="live-recording" style="text-align: center;">
+                        <button class="record-btn" id="recordBtn" onclick="toggleRecording()">
+                            <i class="fas fa-microphone"></i>
+                            <span>Start Recording</span>
+                        </button>
+                        <div style="margin-top: 20px; color: var(--gray);">
+                            <i class="fas fa-info-circle"></i> Click to start/stop recording. We'll analyze in real-time.
+                        </div>
+                        <div id="recordingStatus" style="margin-top: 15px; display: none;">
+                            <i class="fas fa-circle" style="color: var(--danger);"></i> Recording in progress...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- URL Mode -->
+                <div class="input-section" id="urlSection" style="display: none;">
+                    <input type="text" class="url-input" id="audioUrl"
+                           placeholder="Enter audio/video URL (e.g., https://example.com/audio.mp3)">
+                    <p style="margin-top: 10px; color: var(--gray); font-size: 0.9rem;">
+                        <i class="fas fa-info-circle"></i> Provide a direct URL to an audio or video file.
+                    </p>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="analyzeConversation()" id="analyzeBtn">
+                        <i class="fas fa-play"></i>
+                        <span>Start Analysis</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetAnalysis()" id="resetBtn">
+                        <i class="fas fa-redo"></i>
+                        <span>Reset</span>
+                    </button>
+                    <button class="btn btn-success" onclick="downloadReport('pdf')" id="downloadBtn" disabled>
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Download PDF</span>
+                    </button>
+                    <button class="btn btn-success" onclick="downloadReport('html')" id="downloadHtmlBtn" disabled>
+                        <i class="fas fa-file-code"></i>
+                        <span>Download HTML</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loader -->
+            <div class="loader" id="loader">
+                <div class="spinner"></div>
+                <h3>Analyzing Conversation...</h3>
+                <p id="loaderText">Processing audio, please wait...</p>
+                <div style="margin-top: 20px; color: var(--gray); font-size: 0.9rem;">
+                    <i class="fas fa-microphone"></i> Detecting speakers<br>
+                    <i class="fas fa-brain"></i> Running NLP analysis<br>
+                    <i class="fas fa-robot"></i> Generating AI summaries<br>
+                    <i class="fas fa-chart-line"></i> Creating visualizations
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection">
+                <!-- Statistics -->
+                <div class="stats-grid" id="statsGrid"></div>
+
+                <!-- Executive Summary -->
+                <div class="summary-box" id="summaryBox">
+                    <h3><i class="fas fa-robot"></i> AI Short Summary</h3>
+                    <p id="executiveSummary">Loading...</p>
+                </div>
+
+                <!-- Speaker Naming -->
+                <div class="speaker-naming-container" id="speakerNamingContainer"></div>
+
+                <!-- Speaker-wise Summaries -->
+                <div class="speaker-summaries" id="speakerSummaries"></div>
+
+                <!-- Visualizations -->
+                <div class="visualization-section">
+                    <div class="chart-card">
+                        <div class="chart-title">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Speaker Distribution</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="speakerChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-title">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Sentiment Timeline</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="sentimentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NLP Insights -->
+                <div class="analysis-grid" id="nlpInsights"></div>
+
+                <!-- Key Discussion Points & Action Items -->
+                <div class="analysis-grid">
+                    <div class="analysis-card">
+                        <h3><i class="fas fa-list"></i> Key Discussion Points</h3>
+                        <ul id="keyPoints" style="list-style: none; padding: 0;"></ul>
+                    </div>
+                    <div class="analysis-card">
+                        <h3><i class="fas fa-tasks"></i> Action Items & Decisions</h3>
+                        <ul id="actionItems" style="list-style: none; padding: 0;"></ul>
+                    </div>
+                    <div class="analysis-card">
+                        <h3><i class="fas fa-heart"></i> Emotional Analysis</h3>
+                        <p id="emotionalAnalysis"></p>
+                    </div>
+                    <div class="analysis-card">
+                        <h3><i class="fas fa-flag-checkered"></i> Conclusions</h3>
+                        <p id="conclusions"></p>
+                    </div>
+                </div>
+
+                <!-- Timing Analysis -->
+                <div class="analysis-card">
+                    <h3><i class="fas fa-clock"></i> Conversation Timing Analysis</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div>
+                            <strong>Total Exchanges:</strong> <span id="totalExchanges">0</span>
+                        </div>
+                        <div>
+                            <strong>Interruptions:</strong> <span id="interruptions">0</span>
+                        </div>
+                        <div>
+                            <strong>Avg Response Gap:</strong> <span id="avgGap">0s</span>
+                        </div>
+                        <div>
+                            <strong>Conversation Pace:</strong> <span id="convPace">0 turns/sec</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POS Tags Analysis -->
+                <div class="analysis-card">
+                    <h3><i class="fas fa-tag"></i> Part-of-Speech Analysis</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px;" id="posTags"></div>
+                </div>
+
+                <!-- Transcript -->
+                <div class="analysis-card">
+                    <h3><i class="fas fa-transcript"></i> Conversation Transcript</h3>
+                    <div class="transcript-container" id="transcriptContainer"></div>
+                </div>
+
+                <!-- Speaker Analysis -->
+                <div class="analysis-card">
+                    <h3><i class="fas fa-users"></i> Detailed Speaker Analysis</h3>
+                    <div class="analysis-grid" id="speakerAnalysis"></div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="history-section">
+                <div class="history-title">
+                    <i class="fas fa-history"></i> Recent Conversations
+                </div>
+                <div class="history-grid" id="historyGrid">
+                    <p style="color: var(--gray); text-align: center; grid-column: 1/-1;">Loading history...</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Global variables
+            let currentMode = 'upload';
+            let selectedFile = null;
+            let analysisResult = null;
+            let isRecording = false;
+            let mediaRecorder = null;
+            let audioChunks = [];
+            let recordingStream = null;
+            let speakerChart = null;
+            let sentimentChart = null;
+            let currentUser = null;
+
+            // Initialize
+            window.onload = async function() {
+                await checkAuth();
+                await loadUserData();
+                await loadConversationHistory();
+                checkAPIHealth();
+            };
+
+            // Authentication check
+            async function checkAuth() {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/';
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/auth/verify', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+
+                    if (!data.success) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        window.location.href = '/';
+                        return;
+                    }
+
+                    currentUser = data.user;
+                    document.getElementById('userName').textContent = data.user.name || data.user.email;
+                    document.getElementById('welcomeMessage').textContent =
+                        `Welcome , ${data.user.name || data.user.email.split('@')[0]}!`;
+
+                } catch (error) {
+                    console.error('Auth check error:', error);
+                    localStorage.removeItem('token');
+                    window.location.href = '/';
+                }
+            }
+
+            function logout() {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/';
+            }
+
+            // Load user data
+            async function loadUserData() {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch('/api/conversations', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        document.getElementById('totalConversations').textContent = data.data.length;
+                    }
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                }
+            }
+
+            // Load conversation history
+            async function loadConversationHistory() {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch('/api/conversations', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+                    console.log('Conversation history response:', data);
+
+                    const historyGrid = document.getElementById('historyGrid');
+                    
+                    if (data.success && data.data && data.data.length > 0) {
+                        historyGrid.innerHTML = data.data.slice(0, 6).map(conv => `
+                            <div class="history-item" onclick="loadConversation('${conv.conversation_id}')" style="cursor: pointer;">
+                                <h4>${conv.filename || 'Recording'}</h4>
+                                <p>${conv.conversation_type || 'General'} conversation</p>
+                                <div class="history-meta">
+                                    <span><i class="fas fa-users"></i> ${conv.speaker_count || 1} speakers</span>
+                                    <span><i class="fas fa-clock"></i> ${Math.round((conv.duration || 0)/60)} min</span>
+                                    <span><i class="far fa-calendar"></i> ${conv.created_at ? new Date(conv.created_at).toLocaleDateString() : 'N/A'}</span>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        historyGrid.innerHTML = '<p style="color: var(--gray); text-align: center; grid-column: 1/-1;">No conversations yet. Start by uploading or recording one!</p>';
+                    }
+                } catch (error) {
+                    console.error('Error loading history:', error);
+                    document.getElementById('historyGrid').innerHTML = '<p style="color: red; text-align: center; grid-column: 1/-1;">Error loading history</p>';
+                }
+            }
+
+            // Load specific conversation
+            async function loadConversation(conversationId) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`/api/conversations/${conversationId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        analysisResult = data.data;
+                        console.log('Conversation loaded:', analysisResult);
+                        displayResults();
+                        showSuccess('Conversation loaded successfully');
+                    } else {
+                        console.error('API error:', data.error);
+                        showError('Failed to load conversation: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error loading conversation:', error);
+                    showError('Failed to load conversation: ' + error.message);
+                }
+            }
+
+            // Check API health
+            async function checkAPIHealth() {
+                try {
+                    const response = await fetch('/api/health');
+                    const data = await response.json();
+                    if (!data.success) {
+                        showError('API connection issue. Some features may not work.');
+                    }
+                } catch (error) {
+                    showError('Cannot connect to server. Make sure the backend is running.');
+                }
+            }
+
+            // Mode selection
+            function selectMode(mode) {
+                currentMode = mode;
+
+                document.querySelectorAll('.mode-card').forEach(card => {
+                    card.classList.remove('active');
+                });
+                document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+
+                const titles = {
+                    'upload': 'Upload Audio File',
+                    'live': 'Live Recording',
+                    'url': 'Audio URL'
+                };
+                document.getElementById('modeTitle').textContent = titles[mode];
+
+                document.getElementById('uploadSection').style.display = mode === 'upload' ? 'block' : 'none';
+                document.getElementById('liveSection').style.display = mode === 'live' ? 'block' : 'none';
+                document.getElementById('urlSection').style.display = mode === 'url' ? 'block' : 'none';
+
+                resetAnalysis();
+            }
+
+            // File selection
+            function handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                selectedFile = file;
+                const fileInfo = document.getElementById('fileInfo');
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = formatFileSize(file.size);
+
+                // Calculate audio duration if possible
+                if (file.type.startsWith('audio/')) {
+                    const audio = new Audio(URL.createObjectURL(file));
+                    audio.onloadedmetadata = function() {
+                        const duration = Math.round(audio.duration);
+                        const minutes = Math.floor(duration / 60);
+                        const seconds = duration % 60;
+                        document.getElementById('fileDuration').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    };
+                } else {
+                    document.getElementById('fileDuration').textContent = 'Unknown';
+                }
+
+                fileInfo.classList.add('active');
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Toggle recording
+            async function toggleRecording() {
+                const recordBtn = document.getElementById('recordBtn');
+                const btnIcon = recordBtn.querySelector('i');
+                const btnText = recordBtn.querySelector('span');
+                const recordingStatus = document.getElementById('recordingStatus');
+
+                if (!isRecording) {
+                    try {
+                        recordingStream = await navigator.mediaDevices.getUserMedia({
+                            audio: {
+                                echoCancellation: true,
+                                noiseSuppression: true,
+                                autoGainControl: true
+                            }
+                        });
+
+                        let mimeType = 'audio/webm';
+                        if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                            mimeType = 'audio/mp4';
+                            if (!MediaRecorder.isTypeSupported('audio/mp4')) {
+                                mimeType = 'audio/wav';
+                            }
+                        }
+                        
+                        const options = { mimeType: mimeType };
+                        try {
+                            mediaRecorder = new MediaRecorder(recordingStream, options);
+                        } catch (e) {
+                            mediaRecorder = new MediaRecorder(recordingStream);
+                        }
+
+                        audioChunks = [];
+
+                        mediaRecorder.ondataavailable = event => {
+                            if (event.data.size > 0) {
+                                audioChunks.push(event.data);
+                            }
+                        };
+
+                        mediaRecorder.onstop = () => {
+                            const extension = mimeType.split('/')[1];
+                            const audioBlob = new Blob(audioChunks, { type: mimeType });
+                            const fileName = `recording_${new Date().getTime()}.${extension}`;
+                            selectedFile = new File([audioBlob], fileName, {
+                                type: mimeType,
+                                lastModified: new Date().getTime()
+                            });
+
+                            const fileInfo = document.getElementById('fileInfo');
+                            document.getElementById('fileName').textContent = fileName;
+                            document.getElementById('fileSize').textContent = formatFileSize(audioBlob.size);
+
+                            // Create audio element to get actual duration
+                            const audioUrl = URL.createObjectURL(audioBlob);
+                            const tempAudio = new Audio(audioUrl);
+                            tempAudio.onloadedmetadata = function() {
+                                const duration = Math.round(tempAudio.duration);
+                                const minutes = Math.floor(duration / 60);
+                                const seconds = duration % 60;
+                                document.getElementById('fileDuration').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                                URL.revokeObjectURL(audioUrl);
+                            };
+                            tempAudio.onerror = function() {
+                                document.getElementById('fileDuration').textContent = 'Unknown';
+                                URL.revokeObjectURL(audioUrl);
+                            };
+
+                            fileInfo.classList.add('active');
+                            document.getElementById('analyzeBtn').disabled = false;
+
+                            if (recordingStream) {
+                                recordingStream.getTracks().forEach(track => track.stop());
+                                recordingStream = null;
+                            }
+
+                            recordingStatus.style.display = 'none';
+                            showSuccess('Recording completed! Click "Start Analysis" to process.');
+                        };
+
+                        mediaRecorder.start(1000);
+                        isRecording = true;
+
+                        recordBtn.classList.add('recording');
+                        btnIcon.className = 'fas fa-stop';
+                        btnText.textContent = 'Stop Recording';
+                        recordingStatus.style.display = 'block';
+
+                        showSuccess('Recording started... Click stop when done.');
+
+                    } catch (error) {
+                        console.error('Recording error:', error);
+                        let errorMessage = 'Microphone access denied or not available.';
+
+                        if (error.name === 'NotAllowedError') {
+                            errorMessage = 'Microphone access denied. Please allow microphone access.';
+                        } else if (error.name === 'NotFoundError') {
+                            errorMessage = 'No microphone found. Please connect a microphone.';
+                        }
+
+                        showError(errorMessage);
+                        recordBtn.classList.remove('recording');
+                        btnIcon.className = 'fas fa-microphone';
+                        btnText.textContent = 'Start Recording';
+                        isRecording = false;
+                    }
+                } else {
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    }
+                    isRecording = false;
+                    recordBtn.classList.remove('recording');
+                    btnIcon.className = 'fas fa-microphone';
+                    btnText.textContent = 'Start Recording';
+                    recordingStatus.style.display = 'none';
+                }
+            }
+
+            // Analyze conversation
+            async function analyzeConversation() {
+                resetResults();
+
+                if (currentMode === 'upload' && !selectedFile) {
+                    showError('Please select a file to upload');
+                    return;
+                }
+
+                if (currentMode === 'live' && !selectedFile) {
+                    showError('Please record audio first');
+                    return;
+                }
+
+                if (currentMode === 'url') {
+                    const url = document.getElementById('audioUrl').value.trim();
+                    if (!url) {
+                        showError('Please enter an audio URL');
+                        return;
+                    }
+                    if (!isValidUrl(url)) {
+                        showError('Please enter a valid URL');
+                        return;
+                    }
+                }
+
+                showLoader(true);
+                document.getElementById('analyzeBtn').disabled = true;
+                updateProgress(10);
+
+                try {
+                    const token = localStorage.getItem('token');
+                    let uploadResponse;
+                    let fileToUpload = selectedFile;
+
+                    if (currentMode === 'upload' || currentMode === 'live') {
+                        if (!fileToUpload) {
+                            throw new Error('No audio file available');
+                        }
+
+                        const formData = new FormData();
+                        formData.append('audio', fileToUpload);
+
+                        uploadResponse = await axios.post('/api/upload', formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            timeout: 30000
+                        });
+
+                        if (!uploadResponse.data.success) {
+                            throw new Error(uploadResponse.data.error || 'Upload failed');
+                        }
+
+                        updateProgress(40);
+
+                    } else if (currentMode === 'url') {
+                        const url = document.getElementById('audioUrl').value.trim();
+                        uploadResponse = {
+                            data: {
+                                success: true,
+                                data: {
+                                    url: url,
+                                    conversation_id: `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                                }
+                            }
+                        };
+                        updateProgress(20);
+                    }
+
+                    const transcribeRequest = {
+                        url: uploadResponse.data.data.url,
+                        conversation_id: uploadResponse.data.data.conversation_id,
+                        filename: selectedFile ? selectedFile.name : 'url_recording'
+                    };
+
+                    updateProgress(60);
+
+                    const transcribeResponse = await axios.post('/api/transcribe', transcribeRequest, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        timeout: 300000
+                    });
+
+                    if (!transcribeResponse.data.success) {
+                        throw new Error(transcribeResponse.data.error || 'Analysis failed');
+                    }
+
+                    updateProgress(100);
+                    analysisResult = transcribeResponse.data.data;
+
+                    displayResults();
+                    document.getElementById('downloadBtn').disabled = false;
+                    document.getElementById('downloadHtmlBtn').disabled = false;
+                    await loadConversationHistory();
+
+                    showSuccess('Analysis completed successfully!');
+
+                } catch (error) {
+                    console.error('Analysis error:', error);
+
+                    let errorMessage = 'Analysis failed. ';
+                    if (error.response) {
+                        errorMessage += error.response.data?.error || error.response.statusText;
+                    } else if (error.request) {
+                        errorMessage += 'No response from server. Please check your connection.';
+                    } else {
+                        errorMessage += error.message;
+                    }
+
+                    showError(errorMessage);
+                    updateProgress(0);
+
+                } finally {
+                    showLoader(false);
+                    document.getElementById('analyzeBtn').disabled = false;
+                }
+            }
+
+            // Display results
+            function displayResults() {
+                console.log('Displaying results:', analysisResult);
+                
+                if (!analysisResult) {
+                    console.error('No analysis result to display');
+                    return;
+                }
+
+                document.getElementById('resultsSection').style.display = 'block';
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+                try {
+                    updateStats();
+                    updateSummary();
+                    updateSpeakerSummaries();
+                    updateCharts();
+                    updateNLPInsights();
+                    updateKeyPoints();
+                    updateActionItems();
+                    updateEmotionalAnalysis();
+                    updateConclusions();
+                    updateTimingAnalysis();
+                    updatePOSTags();
+                    updateTranscript();
+                    updateSpeakerAnalysis();
+                } catch (error) {
+                    console.error('Error displaying results:', error);
+                }
+            }
+
+            // Update statistics
+            function updateStats() {
+                const statsGrid = document.getElementById('statsGrid');
+                const meta = analysisResult.metadata || {};
+                const nlp = analysisResult.nlp_analysis || {};
+
+                const durationMinutes = meta.duration_minutes ? meta.duration_minutes.toFixed(1) :
+                                       (meta.total_duration ? (meta.total_duration / 60).toFixed(1) : '0');
+                const sentimentLabel = nlp.sentiment?.label || 'Neutral';
+
+                const stats = [
+                    { value: meta.speaker_count || 1, label: 'Speakers', icon: 'fa-users', color: '#4361ee' },
+                    { value: meta.word_count || 0, label: 'Words', icon: 'fa-font', color: '#7209b7' },
+                    { value: durationMinutes, label: 'Minutes', icon: 'fa-clock', color: '#06d6a0' },
+                    { value: sentimentLabel, label: 'Sentiment', icon: 'fa-smile', color: getSentimentColor(sentimentLabel) }
+                ];
+
+                statsGrid.innerHTML = stats.map(stat => `
+                    <div class="stat-card">
+                        <div class="stat-value" style="color: ${stat.color}">${stat.value}</div>
+                        <div class="stat-label">${stat.label}</div>
+                    </div>
+                `).join('');
+            }
+
+            // Update summary
+            function updateSummary() {
+                const summaryBox = document.getElementById('executiveSummary');
+                const summary = analysisResult.ai_summary || {};
+
+                let summaryText = summary.executive_summary || summary.summary || 'No executive summary available.';
+                summaryBox.textContent = summaryText;
+            }
+
+            // Update speaker summaries
+            function updateSpeakerSummaries() {
+                const speakerSummaries = document.getElementById('speakerSummaries');
+                const summary = analysisResult.ai_summary || {};
+                const speakerAnalysis = summary.speaker_analysis || {};
+
+                if (Object.keys(speakerAnalysis).length === 0) {
+                    speakerSummaries.style.display = 'none';
+                    return;
+                }
+
+                speakerSummaries.style.display = 'grid';
+                speakerSummaries.innerHTML = Object.entries(speakerAnalysis).map(([speaker, text]) => `
+                    <div class="speaker-summary-card">
+                        <h4><i class="fas fa-user-circle"></i> ${speaker}</h4>
+                        <p>${text}</p>
+                    </div>
+                `).join('');
+            }
+
+            // Update charts
+            function updateCharts() {
+                if (speakerChart) speakerChart.destroy();
+                if (sentimentChart) sentimentChart.destroy();
+
+                const speakerCtx = document.getElementById('speakerChart').getContext('2d');
+                const speakerData = analysisResult.visualization_data?.speaker_distribution || [];
+
+                if (speakerData.length > 0) {
+                    const colors = ['#4361ee', '#7209b7', '#06d6a0', '#ffd166', '#ef476f', '#f95738', '#3d5a80'];
+
+                    speakerChart = new Chart(speakerCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: speakerData.map(s => `Speaker ${s.speaker}`),
+                            datasets: [{
+                                data: speakerData.map(s => s.percentage),
+                                backgroundColor: colors.slice(0, speakerData.length),
+                                borderWidth: 2,
+                                borderColor: 'white'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'right' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.label}: ${context.raw.toFixed(1)}%`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+                const sentimentData = analysisResult.visualization_data?.sentiment_over_time || [];
+
+                if (sentimentData.length > 0) {
+                    sentimentChart = new Chart(sentimentCtx, {
+                        type: 'line',
+                        data: {
+                            labels: sentimentData.map((s, i) => formatTime(s.time)),
+                            datasets: [{
+                                label: 'Sentiment Score',
+                                data: sentimentData.map(s => s.sentiment),
+                                borderColor: '#4361ee',
+                                backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                                borderWidth: 3,
+                                pointBackgroundColor: sentimentData.map(s =>
+                                    s.sentiment > 0.1 ? '#06d6a0' : s.sentiment < -0.1 ? '#ef476f' : '#ffd166'
+                                ),
+                                pointRadius: 4,
+                                pointHoverRadius: 6,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    min: -1,
+                                    max: 1,
+                                    grid: { color: 'rgba(0,0,0,0.05)' },
+                                    title: { display: true, text: 'Sentiment' }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Update NLP insights
+            function updateNLPInsights() {
+                const nlpInsights = document.getElementById('nlpInsights');
+                const nlp = analysisResult.nlp_analysis || {};
+
+                const insights = [
+                    {
+                        title: 'Sentiment Analysis',
+                        icon: 'fa-smile',
+                        content: nlp.sentiment ? `
+                            <div style="text-align: center; margin-bottom: 10px;">
+                                <span style="font-size: 2rem;">${nlp.sentiment.emoji || '😐'}</span>
+                            </div>
+                            <span class="sentiment-badge sentiment-${getSentimentClass(nlp.sentiment.label)}"
+                                  style="background-color: ${nlp.sentiment.color}20; color: ${nlp.sentiment.color};">
+                                ${nlp.sentiment.label} (${(nlp.sentiment.score * 100).toFixed(0)}%)
+                            </span>
+                            <p style="margin-top: 10px;">Confidence: ${(nlp.sentiment.confidence * 100).toFixed(0)}%</p>
+                        ` : 'No sentiment data'
+                    },
+                    {
+                        title: 'Key Topics',
+                        icon: 'fa-tags',
+                        content: nlp.topics && nlp.topics.length > 0 ? `
+                            <div class="tag-cloud">
+                                ${nlp.topics.slice(0, 8).map(topic => `
+                                    <span class="tag primary">
+                                        ${topic.topic} (${(topic.confidence * 100).toFixed(0)}%)
+                                    </span>
+                                `).join('')}
+                            </div>
+                        ` : 'No topics detected'
+                    },
+                    {
+                        title: 'Named Entities',
+                        icon: 'fa-building',
+                        content: nlp.entities && nlp.entities.length > 0 ? `
+                            <div class="tag-cloud">
+                                ${nlp.entities.slice(0, 10).map(entity => `
+                                    <span class="tag">
+                                        ${entity.icon || '🏷️'} ${entity.text} (${entity.type})
+                                    </span>
+                                `).join('')}
+                            </div>
+                        ` : 'No entities detected'
+                    }
+                ];
+
+                nlpInsights.innerHTML = insights.map(insight => `
+                    <div class="analysis-card">
+                        <h3><i class="fas ${insight.icon}"></i> ${insight.title}</h3>
+                        ${insight.content}
+                    </div>
+                `).join('');
+            }
+
+            // Update key points
+            function updateKeyPoints() {
+                const keyPoints = document.getElementById('keyPoints');
+                const summary = analysisResult.ai_summary || {};
+                const points = summary.key_points || [];
+
+                if (points.length === 0) {
+                    keyPoints.innerHTML = '<li style="color: var(--gray);">No key points extracted</li>';
+                    return;
+                }
+
+                keyPoints.innerHTML = points.map(point => `
+                    <li style="margin-bottom: 10px; padding-left: 20px; position: relative;">
+                        <i class="fas fa-circle" style="color: var(--primary); font-size: 0.5rem; position: absolute; left: 0; top: 8px;"></i>
+                        ${point}
+                    </li>
+                `).join('');
+            }
+
+            // Update action items
+            function updateActionItems() {
+                const actionItems = document.getElementById('actionItems');
+                const summary = analysisResult.ai_summary || {};
+                const items = summary.action_items || [];
+
+                if (items.length === 0) {
+                    actionItems.innerHTML = '<li style="color: var(--gray);">No action items detected</li>';
+                    return;
+                }
+
+                actionItems.innerHTML = items.map(item => `
+                    <li style="margin-bottom: 10px; padding-left: 20px; position: relative;">
+                        <i class="fas fa-check-circle" style="color: var(--success); position: absolute; left: 0; top: 3px;"></i>
+                        ${item}
+                    </li>
+                `).join('');
+            }
+
+            // Update emotional analysis
+            function updateEmotionalAnalysis() {
+                const emotionalAnalysis = document.getElementById('emotionalAnalysis');
+                const summary = analysisResult.ai_summary || {};
+                const text = summary.emotional_analysis || 'No emotional analysis available.';
+                emotionalAnalysis.textContent = text;
+            }
+
+            // Update conclusions
+            function updateConclusions() {
+                const conclusions = document.getElementById('conclusions');
+                const summary = analysisResult.ai_summary || {};
+                const text = summary.conclusions || 'No conclusions available.';
+                conclusions.textContent = text;
+            }
+
+            // Update timing analysis
+            function updateTimingAnalysis() {
+                const timing = analysisResult.nlp_analysis?.timing_analysis || {};
+
+                document.getElementById('totalExchanges').textContent = timing.num_exchanges || 0;
+                document.getElementById('interruptions').textContent = timing.interruptions || 0;
+                document.getElementById('avgGap').textContent = timing.avg_gap ? timing.avg_gap.toFixed(2) + 's' : '0s';
+                document.getElementById('convPace').textContent = timing.conversation_pace ?
+                    timing.conversation_pace.toFixed(2) + ' turns/sec' : '0 turns/sec';
+            }
+
+            // Update POS tags
+            function updatePOSTags() {
+                const posTags = document.getElementById('posTags');
+                const pos = analysisResult.nlp_analysis?.pos_tags?.category_counts || {};
+
+                if (Object.keys(pos).length === 0) {
+                    posTags.innerHTML = '<p style="color: var(--gray);">No POS data available</p>';
+                    return;
+                }
+
+                const total = Object.values(pos).reduce((a, b) => a + b, 0);
+                posTags.innerHTML = Object.entries(pos).map(([category, count]) => `
+                    <div style="flex: 1; min-width: 120px;">
+                        <strong>${category}:</strong> ${count} (${((count/total)*100).toFixed(1)}%)
+                    </div>
+                `).join('');
+            }
+
+            // Update transcript
+            function updateTranscript() {
+                const transcriptContainer = document.getElementById('transcriptContainer');
+                const transcript = analysisResult.transcript || {};
+
+                if (transcript.paragraphs && transcript.paragraphs.length > 0) {
+                    transcriptContainer.innerHTML = transcript.paragraphs.map(para => `
+                        <div class="transcript-line">
+                            <div class="transcript-speaker">
+                                <span class="speaker-tag speaker-${para.speaker}">Speaker ${para.speaker}</span>
+                                <span class="transcript-time">
+                                    <i class="fas fa-clock"></i> ${formatTime(para.start)} - ${formatTime(para.end)}
+                                </span>
+                            </div>
+                            <div class="transcript-text">${para.text}</div>
+                            <div class="transcript-meta">
+                                <span class="sentiment-badge sentiment-${getSentimentClass(para.sentiment?.label)}">
+                                    ${para.sentiment?.emoji || ''} ${para.sentiment?.label || 'Neutral'}
+                                </span>
+                                ${para.intents ? para.intents.map(i => `
+                                    <span class="sentiment-badge sentiment-neutral">
+                                        ${i.icon || '💬'} ${i.intent}
+                                    </span>
+                                `).join('') : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                } else if (transcript.full_text) {
+                    transcriptContainer.innerHTML = `
+                        <div class="transcript-line">
+                            <div class="transcript-text">${transcript.full_text}</div>
+                        </div>
+                    `;
+                } else {
+                    transcriptContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">No transcript available.</p>';
+                }
+            }
+
+            // Update speaker analysis
+            function updateSpeakerAnalysis() {
+                const speakerAnalysis = document.getElementById('speakerAnalysis');
+                const speakers = analysisResult.speaker_analysis || {};
+
+                if (Object.keys(speakers).length === 0) {
+                    speakerAnalysis.innerHTML = '<p style="color: var(--gray);">No speaker analysis available.</p>';
+                    return;
+                }
+
+                speakerAnalysis.innerHTML = Object.values(speakers).map(speaker => `
+                    <div class="analysis-card">
+                        <h4>
+                            <span class="speaker-tag speaker-${speaker.id}">Speaker ${speaker.id}</span>
+                        </h4>
+                        <div style="margin-top: 15px;">
+                            <div style="margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Contribution</span>
+                                    <span><strong>${speaker.contribution_percentage}%</strong> (${speaker.word_count} words)</span>
+                                </div>
+                                <div style="height: 8px; background: var(--light-gray); border-radius: 4px;">
+                                    <div style="width: ${speaker.contribution_percentage}%; height: 100%; background: var(--primary); border-radius: 4px;"></div>
+                                </div>
+                            </div>
+
+                            <p><i class="fas fa-chart-line"></i> Speaking Rate: ${speaker.speaking_rate} words/min</p>
+                            <p><i class="fas fa-clock"></i> Duration: ${speaker.duration}s</p>
+
+                            ${speaker.sentiment ? `
+                                <p><i class="fas fa-smile"></i> Sentiment:
+                                    <span class="sentiment-badge sentiment-${getSentimentClass(speaker.sentiment.label)}">
+                                        ${speaker.sentiment.label}
+                                    </span>
+                                </p>
+                            ` : ''}
+
+                            ${speaker.key_phrases && speaker.key_phrases.length > 0 ? `
+                                <p><i class="fas fa-key"></i> Key Phrases: ${speaker.key_phrases.join(' • ')}</p>
+                            ` : ''}
+
+                            <p><i class="fas fa-check-circle"></i> Confidence: ${(speaker.avg_word_confidence * 100).toFixed(0)}%</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Helper functions
+            function getSentimentClass(label) {
+                if (!label) return 'neutral';
+                const lower = label.toLowerCase();
+                if (lower.includes('positive')) return 'positive';
+                if (lower.includes('negative')) return 'negative';
+                return 'neutral';
+            }
+
+            function getSentimentColor(label) {
+                const cls = getSentimentClass(label);
+                return cls === 'positive' ? '#06d6a0' : cls === 'negative' ? '#ef476f' : '#6c757d';
+            }
+
+            function formatTime(seconds) {
+                if (!seconds && seconds !== 0) return '0:00';
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            function updateProgress(percent) {
+                document.getElementById('progressFill').style.width = percent + '%';
+            }
+
+            function showLoader(show) {
+                const loader = document.getElementById('loader');
+                loader.classList.toggle('active', show);
+
+                if (show) {
+                    const texts = [
+                        'Processing audio...',
+                        'Detecting speakers...',
+                        'Transcribing speech...',
+                        'Analyzing sentiment...',
+                        'Extracting topics...',
+                        'Identifying entities...',
+                        'Generating speaker summaries...',
+                        'Creating visualizations...'
+                    ];
+                    let index = 0;
+
+                    const interval = setInterval(() => {
+                        if (!show) {
+                            clearInterval(interval);
+                            return;
+                        }
+                        document.getElementById('loaderText').textContent = texts[index % texts.length];
+                        index++;
+                    }, 2500);
+                }
+            }
+
+            function showError(message) {
+                const errorDiv = document.getElementById('errorMessage');
+                errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            }
+
+            function showSuccess(message) {
+                const successDiv = document.getElementById('successMessage');
+                successDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+                successDiv.style.display = 'block';
+                setTimeout(() => {
+                    successDiv.style.display = 'none';
+                }, 3000);
+            }
+
+            function resetAnalysis() {
+                selectedFile = null;
+                document.getElementById('audioFile').value = '';
+                document.getElementById('fileInfo').classList.remove('active');
+                document.getElementById('audioUrl').value = '';
+
+                if (isRecording) {
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    }
+                    if (recordingStream) {
+                        recordingStream.getTracks().forEach(track => track.stop());
+                        recordingStream = null;
+                    }
+                    isRecording = false;
+
+                    const recordBtn = document.getElementById('recordBtn');
+                    recordBtn.classList.remove('recording');
+                    recordBtn.querySelector('i').className = 'fas fa-microphone';
+                    recordBtn.querySelector('span').textContent = 'Start Recording';
+                    document.getElementById('recordingStatus').style.display = 'none';
+                }
+
+                resetResults();
+
+                document.getElementById('analyzeBtn').disabled = false;
+                document.getElementById('downloadBtn').disabled = true;
+                document.getElementById('downloadHtmlBtn').disabled = true;
+                updateProgress(0);
+                document.getElementById('errorMessage').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'none';
+            }
+
+            function resetResults() {
+                analysisResult = null;
+                document.getElementById('resultsSection').style.display = 'none';
+                document.getElementById('statsGrid').innerHTML = '';
+                document.getElementById('executiveSummary').textContent = 'Loading...';
+                document.getElementById('speakerSummaries').innerHTML = '';
+                document.getElementById('nlpInsights').innerHTML = '';
+                document.getElementById('keyPoints').innerHTML = '';
+                document.getElementById('actionItems').innerHTML = '';
+                document.getElementById('emotionalAnalysis').textContent = '';
+                document.getElementById('conclusions').textContent = '';
+                document.getElementById('posTags').innerHTML = '';
+                document.getElementById('transcriptContainer').innerHTML = '';
+                document.getElementById('speakerAnalysis').innerHTML = '';
+
+                const speakerCanvas = document.getElementById('speakerChart');
+                const sentimentCanvas = document.getElementById('sentimentChart');
+
+                if (speakerCanvas) {
+                    speakerCanvas.parentNode.innerHTML = '<canvas id="speakerChart"></canvas>';
+                }
+                if (sentimentCanvas) {
+                    sentimentCanvas.parentNode.innerHTML = '<canvas id="sentimentChart"></canvas>';
+                }
+
+                if (speakerChart) {
+                    speakerChart.destroy();
+                    speakerChart = null;
+                }
+
+                if (sentimentChart) {
+                    sentimentChart.destroy();
+                    sentimentChart = null;
+                }
+            }
+
+            async function downloadReport(format) {
+                if (!analysisResult || !analysisResult.conversation_id) {
+                    showError('No analysis results to download');
+                    return;
+                }
+
+                if (format === 'html') {
+                    downloadAsHtml();
+                } else {
+                    downloadPdf();
+                }
+            }
+
+            async function downloadPdf() {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`/api/export/${analysisResult.conversation_id}/pdf`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Download failed');
+                    }
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `conversation_report_${analysisResult.conversation_id}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    showSuccess('PDF Report downloaded successfully!');
+                } catch (error) {
+                    console.error('Download error:', error);
+                    showError('Failed to download report: ' + error.message);
+                }
+            }
+
+            function downloadAsHtml() {
+                const resultsSection = document.getElementById('resultsSection');
+                const meta = analysisResult.metadata || {};
+                const nlp = analysisResult.nlp_analysis || {};
+                const summary = analysisResult.ai_summary || {};
+
+                const durationMinutes = meta.duration_minutes ? meta.duration_minutes.toFixed(1) :
+                                       (meta.total_duration ? (meta.total_duration / 60).toFixed(1) : '0');
+                const sentimentLabel = nlp.sentiment?.label || 'Neutral';
+
+                const statsData = [
+                    { value: meta.speaker_count || 1, label: 'Speakers', icon: 'fa-users', color: '#4361ee' },
+                    { value: meta.word_count || 0, label: 'Words', icon: 'fa-font', color: '#7209b7' },
+                    { value: durationMinutes, label: 'Minutes', icon: 'fa-clock', color: '#06d6a0' },
+                    { value: sentimentLabel, label: 'Sentiment', icon: 'fa-smile', color: getSentimentColor(sentimentLabel) }
+                ];
+
+                let speakerChartImg = '', sentimentChartImg = '';
+                if (speakerChart) {
+                    speakerChartImg = speakerChart.toBase64Image();
+                }
+                if (sentimentChart) {
+                    sentimentChartImg = sentimentChart.toBase64Image();
+                }
+
+                const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation Analytics Report - ${analysisResult.conversation_id}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --success: #06d6a0;
+            --warning: #ffd166;
+            --danger: #ef476f;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f5f5f5; color: var(--dark); padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; padding: 30px; border-radius: 20px; margin-bottom: 30px; }
+        .header h1 { font-size: 2rem; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 25px; border-radius: 15px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .stat-value { font-size: 2.5rem; font-weight: 700; margin-bottom: 5px; }
+        .stat-label { color: var(--gray); font-size: 0.9rem; }
+        .summary-box { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; }
+        .summary-box h3 { margin-bottom: 15px; font-size: 1.3rem; }
+        .summary-box p { line-height: 1.8; opacity: 0.95; }
+        .speaker-summaries { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .speaker-summary-card { background: white; padding: 20px; border-radius: 15px; border-left: 5px solid var(--primary); box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .speaker-summary-card h4 { color: var(--primary); margin-bottom: 10px; font-size: 1.1rem; }
+        .speaker-summary-card p { color: var(--gray); line-height: 1.6; font-size: 0.95rem; }
+        .visualization-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .chart-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .chart-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; color: var(--dark); }
+        .chart-container { height: 300px; display: flex; align-items: center; justify-content: center; }
+        .chart-container img { max-width: 100%; max-height: 100%; }
+        .analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .analysis-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .analysis-card h3 { color: var(--primary); margin-bottom: 15px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+        .tag-cloud { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tag { background: var(--light); color: var(--dark); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; }
+        .tag.primary { background: rgba(67, 97, 238, 0.1); color: var(--primary); }
+        .transcript-container { padding: 20px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .transcript-line { padding: 15px; margin-bottom: 15px; background: var(--light); border-radius: 10px; border-left: 5px solid var(--primary); }
+        .transcript-speaker { font-weight: 600; color: var(--primary); margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .transcript-time { color: var(--gray); font-size: 0.85rem; font-weight: normal; }
+        .transcript-text { line-height: 1.6; margin-bottom: 10px; }
+        .sentiment-badge { display: inline-block; padding: 3px 12px; border-radius: 15px; font-size: 0.8rem; font-weight: 500; }
+        .sentiment-positive { background: rgba(6, 214, 160, 0.1); color: #06d6a0; }
+        .sentiment-negative { background: rgba(239, 71, 111, 0.1); color: #ef476f; }
+        .sentiment-neutral { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
+        .speaker-tag { display: inline-block; padding: 5px 15px; background: var(--primary); color: white; border-radius: 15px; font-size: 0.9rem; margin-right: 10px; }
+        .speaker-tag.speaker-1 { background: #4361ee; }
+        .speaker-tag.speaker-2 { background: #7209b7; }
+        .speaker-tag.speaker-3 { background: #06d6a0; }
+        .speaker-tag.speaker-4 { background: #ffd166; color: var(--dark); }
+        .speaker-tag.speaker-5 { background: #ef476f; }
+        .key-points, .action-items { list-style: none; padding: 0; }
+        .key-points li, .action-items li { margin-bottom: 10px; padding-left: 20px; position: relative; }
+        .key-points li i { color: var(--primary); font-size: 0.5rem; position: absolute; left: 0; top: 8px; }
+        .action-items li i { color: var(--success); position: absolute; left: 0; top: 3px; }
+        .timing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .footer { text-align: center; padding: 30px; color: var(--gray); font-size: 0.9rem; }
+        @media print { body { background: white; } .stat-card, .chart-card, .analysis-card, .summary-box, .speaker-summary-card { box-shadow: none; border: 1px solid #ddd; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-comments"></i> Conversation Analytics Report</h1>
+            <p>Generated on ${new Date().toLocaleString()}</p>
+            <p>Conversation ID: ${analysisResult.conversation_id}</p>
+        </div>
+
+        <div class="stats-grid">
+            ${statsData.map(stat => `
+            <div class="stat-card">
+                <div class="stat-value" style="color: ${stat.color}">${stat.value}</div>
+                <div class="stat-label">${stat.label}</div>
+            </div>
+            `).join('')}
+        </div>
+
+        <div class="summary-box">
+            <h3><i class="fas fa-robot"></i> AI Short Summary</h3>
+            <p>${summary.executive_summary || summary.summary || 'No executive summary available.'}</p>
+        </div>
+
+        ${Object.keys(summary.speaker_analysis || {}).length > 0 ? `
+        <div class="speaker-summaries">
+            ${Object.entries(summary.speaker_analysis || {}).map(([speaker, text]) => `
+            <div class="speaker-summary-card">
+                <h4><i class="fas fa-user-circle"></i> ${speaker}</h4>
+                <p>${text}</p>
+            </div>
+            `).join('')}
+        </div>
+        ` : ''}
+
+        <div class="visualization-section">
+            ${speakerChartImg ? `
+            <div class="chart-card">
+                <div class="chart-title"><i class="fas fa-chart-pie"></i> Speaker Distribution</div>
+                <div class="chart-container"><img src="${speakerChartImg}" alt="Speaker Distribution"></div>
+            </div>
+            ` : ''}
+            ${sentimentChartImg ? `
+            <div class="chart-card">
+                <div class="chart-title"><i class="fas fa-chart-line"></i> Sentiment Timeline</div>
+                <div class="chart-container"><img src="${sentimentChartImg}" alt="Sentiment Timeline"></div>
+            </div>
+            ` : ''}
+        </div>
+
+        <div class="analysis-grid">
+            <div class="analysis-card">
+                <h3><i class="fas fa-smile"></i> Sentiment Analysis</h3>
+                <p>${nlp.sentiment ? `${nlp.sentiment.label} (${(nlp.sentiment.score * 100).toFixed(0)}%)` : 'No sentiment data'}</p>
+            </div>
+            <div class="analysis-card">
+                <h3><i class="fas fa-tags"></i> Key Topics</h3>
+                <div class="tag-cloud">
+                    ${(nlp.topics || []).slice(0, 8).map(topic => `<span class="tag primary">${topic.topic} (${(topic.confidence * 100).toFixed(0)}%)</span>`).join('') || 'No topics detected'}
+                </div>
+            </div>
+            <div class="analysis-card">
+                <h3><i class="fas fa-building"></i> Named Entities</h3>
+                <div class="tag-cloud">
+                    ${(nlp.entities || []).slice(0, 10).map(entity => `<span class="tag">${entity.text} (${entity.type})</span>`).join('') || 'No entities detected'}
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-grid">
+            <div class="analysis-card">
+                <h3><i class="fas fa-list"></i> Key Discussion Points</h3>
+                <ul class="key-points">
+                    ${(summary.key_points || []).length > 0 ? summary.key_points.map(point => `<li><i class="fas fa-circle"></i> ${point}</li>`).join('') : '<li style="color: var(--gray);">No key points extracted</li>'}
+                </ul>
+            </div>
+            <div class="analysis-card">
+                <h3><i class="fas fa-tasks"></i> Action Items & Decisions</h3>
+                <ul class="action-items">
+                    ${(summary.action_items || []).length > 0 ? summary.action_items.map(item => `<li><i class="fas fa-check-circle"></i> ${item}</li>`).join('') : '<li style="color: var(--gray);">No action items detected</li>'}
+                </ul>
+            </div>
+        </div>
+
+        <div class="analysis-grid">
+            <div class="analysis-card">
+                <h3><i class="fas fa-heart"></i> Emotional Analysis</h3>
+                <p>${summary.emotional_analysis || 'No emotional analysis available.'}</p>
+            </div>
+            <div class="analysis-card">
+                <h3><i class="fas fa-flag-checkered"></i> Conclusions</h3>
+                <p>${summary.conclusions || 'No conclusions available.'}</p>
+            </div>
+        </div>
+
+        <div class="analysis-card" style="margin-bottom: 30px;">
+            <h3><i class="fas fa-clock"></i> Conversation Timing Analysis</h3>
+            <div class="timing-grid">
+                <div><strong>Total Exchanges:</strong> ${nlp.timing_analysis?.num_exchanges || 0}</div>
+                <div><strong>Interruptions:</strong> ${nlp.timing_analysis?.interruptions || 0}</div>
+                <div><strong>Avg Response Gap:</strong> ${nlp.timing_analysis?.avg_gap?.toFixed(2) || 0}s</div>
+                <div><strong>Conversation Pace:</strong> ${nlp.timing_analysis?.conversation_pace?.toFixed(2) || 0} turns/sec</div>
+            </div>
+        </div>
+
+        <div class="analysis-card" style="margin-bottom: 30px;">
+            <h3><i class="fas fa-tag"></i> Part-of-Speech Analysis</h3>
+            <div class="tag-cloud">
+                ${Object.entries(nlp.pos_tags?.category_counts || {}).map(([category, count]) => `<span class="tag">${category}: ${count}</span>`).join('') || 'No POS data available'}
+            </div>
+        </div>
+
+        <div class="analysis-card" style="margin-bottom: 30px;">
+            <h3><i class="fas fa-transcript"></i> Conversation Transcript</h3>
+            <div class="transcript-container">
+                ${(analysisResult.transcript?.paragraphs || []).map(para => `
+                <div class="transcript-line">
+                    <div class="transcript-speaker">
+                        <span class="speaker-tag speaker-${para.speaker}">Speaker ${para.speaker}</span>
+                        <span class="transcript-time"><i class="fas fa-clock"></i> ${formatTime(para.start)} - ${formatTime(para.end)}</span>
+                    </div>
+                    <div class="transcript-text">${para.text}</div>
+                    <span class="sentiment-badge sentiment-${getSentimentClass(para.sentiment?.label)}">${para.sentiment?.emoji || ''} ${para.sentiment?.label || 'Neutral'}</span>
+                </div>
+                `).join('') || analysisResult.transcript?.full_text || '<p style="text-align: center; color: var(--gray);">No transcript available.</p>'}
+            </div>
+        </div>
+
+        ${Object.keys(analysisResult.speaker_analysis || {}).length > 0 ? `
+        <div class="analysis-card" style="margin-bottom: 30px;">
+            <h3><i class="fas fa-users"></i> Detailed Speaker Analysis</h3>
+            <div class="analysis-grid">
+                ${Object.values(analysisResult.speaker_analysis || {}).map(speaker => `
+                <div class="analysis-card">
+                    <h4><span class="speaker-tag speaker-${speaker.id}">Speaker ${speaker.id}</span></h4>
+                    <p><strong>Contribution:</strong> ${speaker.contribution_percentage}% (${speaker.word_count} words)</p>
+                    <p><strong>Speaking Rate:</strong> ${speaker.speaking_rate} words/min</p>
+                    <p><strong>Duration:</strong> ${speaker.duration}s</p>
+                    ${speaker.sentiment ? `<p><strong>Sentiment:</strong> <span class="sentiment-badge sentiment-${getSentimentClass(speaker.sentiment.label)}">${speaker.sentiment.label}</span></p>` : ''}
+                    ${speaker.key_phrases?.length > 0 ? `<p><strong>Key Phrases:</strong> ${speaker.key_phrases.join(' • ')}</p>` : ''}
+                    <p><strong>Confidence:</strong> ${(speaker.avg_word_confidence * 100).toFixed(0)}%</p>
+                </div>
+                `).join('')}
+            </div>
+        </div>
+        ` : ''}
+
+        <div class="footer">
+            <p>Generated by Conversation Analytics System</p>
+            <p>${new Date().toLocaleString()}</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `conversation_report_${analysisResult.conversation_id}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                showSuccess('HTML Report downloaded successfully!');
+            }
+        </script>
+    </body>
+</html>
